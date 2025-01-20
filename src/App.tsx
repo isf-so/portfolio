@@ -1,163 +1,183 @@
-import React, { useState, createContext, useContext } from 'react';
-import { Settings, Camera, Video, Mail, Globe, Instagram, Youtube, Twitter } from 'lucide-react';
-import OptionsMenu from './components/OptionsMenu';
-import MainMenu from './components/MainMenu';
-import PhotoSection from './components/PhotoSection';
-import VideoSection from './components/VideoSection';
-import ContactSection from './components/ContactSection';
-import LanguageSelector from './components/LanguageSelector';
+import React, { useState } from 'react';
+import { Menu, X, Globe, ChevronLeft, ChevronRight } from 'lucide-react';
+import { photos } from './data';
 
-interface ThemeContext {
-  brightness: number;
-  contrast: number;
-  language: 'fr' | 'en' | 'de';
-  setBrightness: (value: number) => void;
-  setContrast: (value: number) => void;
-  setLanguage: (lang: 'fr' | 'en' | 'de') => void;
-}
+type Language = 'fr' | 'en' | 'de';
 
-export const ThemeContext = createContext<ThemeContext>({
-  brightness: 100,
-  contrast: 100,
-  language: 'fr',
-  setBrightness: () => {},
-  setContrast: () => {},
-  setLanguage: () => {},
-});
+const translations = {
+  fr: {
+    photos: 'Photos',
+    videos: 'Vidéos',
+    social: 'Réseaux Sociaux',
+    page: 'Page',
+    of: 'sur',
+  },
+  en: {
+    photos: 'Photos',
+    videos: 'Videos',
+    social: 'Social Media',
+    page: 'Page',
+    of: 'of',
+  },
+  de: {
+    photos: 'Fotos',
+    videos: 'Videos',
+    social: 'Soziale Medien',
+    page: 'Seite',
+    of: 'von',
+  },
+};
 
 function App() {
-  const [currentSection, setCurrentSection] = useState('main');
-  const [showOptions, setShowOptions] = useState(false);
-  const [showLanguageSelector, setShowLanguageSelector] = useState(false);
-  const [brightness, setBrightness] = useState(100);
-  const [contrast, setContrast] = useState(100);
-  const [language, setLanguage] = useState<'fr' | 'en' | 'de'>('fr');
+  const [currentSection, setCurrentSection] = useState<string | null>(null);
+  const [languageMenuOpen, setLanguageMenuOpen] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState<Language>('fr');
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const photosPerPage = 4;
+  const totalPages = Math.ceil(photos.length / photosPerPage);
+  
+  const handleLanguageChange = (lang: Language) => {
+    setCurrentLanguage(lang);
+    setLanguageMenuOpen(false);
+  };
 
-  const translations = {
-    fr: {
-      photos: 'Photos',
-      videos: 'Vidéos',
-      contact: 'Contact',
-      options: 'Options',
-      welcome: 'Bienvenue dans mon univers créatif',
-      social: 'Réseaux Sociaux'
-    },
-    en: {
-      photos: 'Photos',
-      videos: 'Videos',
-      contact: 'Contact',
-      options: 'Options',
-      welcome: 'Welcome to my creative universe',
-      social: 'Social Media'
-    },
-    de: {
-      photos: 'Fotos',
-      videos: 'Videos',
-      contact: 'Kontakt',
-      options: 'Optionen',
-      welcome: 'Willkommen in meiner kreativen Welt',
-      social: 'Soziale Medien'
-    }
+  const renderPhotos = () => {
+    const startIndex = (currentPage - 1) * photosPerPage;
+    const endIndex = startIndex + photosPerPage;
+    const currentPhotos = photos.slice(startIndex, endIndex);
+
+    return (
+      <div className="grid grid-cols-2 gap-4 p-4">
+        {currentPhotos.map((photo, index) => (
+          <div key={index} className="relative group overflow-hidden">
+            <img
+              src={photo.url}
+              alt={photo.title}
+              className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+              <p className="text-white text-lg font-light">{photo.title}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderPagination = () => {
+    return (
+      <div className="flex items-center justify-center gap-4 mt-4">
+        <button
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+          className="p-2 border border-white/20 rounded-full disabled:opacity-50"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <span className="text-sm">
+          {translations[currentLanguage].page} {currentPage} {translations[currentLanguage].of} {totalPages}
+        </span>
+        <button
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+          disabled={currentPage === totalPages}
+          className="p-2 border border-white/20 rounded-full disabled:opacity-50"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
+    );
   };
 
   return (
-    <ThemeContext.Provider value={{ brightness, contrast, language, setBrightness, setContrast, setLanguage }}>
-      <div 
-        className="min-h-screen text-white transition-all duration-300"
-        style={{
-          filter: `brightness(${brightness}%) contrast(${contrast}%)`,
-          background: 'linear-gradient(135deg, #1a0f3c 0%, #4b1248 50%, #2c3e50 100%)'
-        }}
-      >
-        {/* Background effect */}
-        <div className="fixed inset-0 opacity-30">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 via-pink-500/20 to-blue-500/20"></div>
-        </div>
-
-        {/* Main content */}
-        <div className="relative z-10 min-h-screen flex flex-col">
-          {/* Header with options */}
-          <header className="p-4 flex justify-between items-center animate-fadeIn">
-            <div className="flex gap-4">
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 hover:bg-white/20 transition-all duration-300 rounded-full transform hover:scale-110"
-              >
-                <Instagram size={24} />
-              </a>
-              <a 
-                href="https://youtube.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 hover:bg-white/20 transition-all duration-300 rounded-full transform hover:scale-110"
-              >
-                <Youtube size={24} />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="p-2 hover:bg-white/20 transition-all duration-300 rounded-full transform hover:scale-110"
-              >
-                <Twitter size={24} />
-              </a>
-            </div>
-            <div className="flex gap-4">
-              <button 
-                onClick={() => setShowLanguageSelector(true)}
-                className="p-2 hover:bg-white/20 transition-all duration-300 rounded-full transform hover:scale-110"
-              >
-                <Globe size={24} />
-              </button>
-              <button 
-                onClick={() => setShowOptions(!showOptions)}
-                className="p-2 hover:bg-white/20 transition-all duration-300 rounded-full transform hover:scale-110"
-              >
-                <Settings size={24} className={showOptions ? 'animate-spin' : ''} />
-              </button>
-            </div>
-          </header>
-
-          {/* Main content area */}
-          <main className="flex-1 flex items-center justify-center p-4">
-            {showOptions && (
-              <OptionsMenu 
-                onClose={() => setShowOptions(false)}
-              />
-            )}
-            
-            {showLanguageSelector && (
-              <LanguageSelector 
-                onClose={() => setShowLanguageSelector(false)}
-                onSelectLanguage={(lang) => {
-                  setLanguage(lang);
-                  setShowLanguageSelector(false);
-                }}
-                currentLanguage={language}
-              />
-            )}
-            
-            {currentSection === 'main' && (
-              <MainMenu 
-                onNavigate={setCurrentSection} 
-                translations={translations[language]} 
-              />
-            )}
-            {currentSection === 'photos' && (
-              <PhotoSection onBack={() => setCurrentSection('main')} />
-            )}
-            {currentSection === 'videos' && (
-              <VideoSection onBack={() => setCurrentSection('main')} />
-            )}
-            {currentSection === 'contact' && (
-              <ContactSection onBack={() => setCurrentSection('main')} />
-            )}
-          </main>
-        </div>
+    <div className="min-h-screen bg-black text-white">
+      {/* Language Selector */}
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => setLanguageMenuOpen(!languageMenuOpen)}
+          className="p-2 rounded-full hover:bg-white/10 transition-colors"
+        >
+          <Globe className="w-6 h-6" />
+        </button>
+        
+        {languageMenuOpen && (
+          <div className="absolute mt-2 bg-black border border-white/20 rounded-lg shadow-xl">
+            <button
+              onClick={() => handleLanguageChange('fr')}
+              className="block w-full px-4 py-2 text-left hover:bg-white/10"
+            >
+              Français
+            </button>
+            <button
+              onClick={() => handleLanguageChange('en')}
+              className="block w-full px-4 py-2 text-left hover:bg-white/10"
+            >
+              English
+            </button>
+            <button
+              onClick={() => handleLanguageChange('de')}
+              className="block w-full px-4 py-2 text-left hover:bg-white/10"
+            >
+              Deutsch
+            </button>
+          </div>
+        )}
       </div>
-    </ThemeContext.Provider>
+
+      {/* Main Content */}
+      {!currentSection ? (
+        <div className="h-screen flex items-center justify-center">
+          <div className="grid grid-cols-2 gap-8">
+            <button
+              onClick={() => setCurrentSection('photos')}
+              className="px-8 py-4 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              {translations[currentLanguage].photos}
+            </button>
+            <button
+              onClick={() => setCurrentSection('videos')}
+              className="px-8 py-4 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              {translations[currentLanguage].videos}
+            </button>
+            <button
+              onClick={() => setCurrentSection('social')}
+              className="px-8 py-4 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              {translations[currentLanguage].social}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="min-h-screen p-8">
+          <button
+            onClick={() => setCurrentSection(null)}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          
+          {currentSection === 'photos' && (
+            <>
+              {renderPhotos()}
+              {renderPagination()}
+            </>
+          )}
+          
+          {currentSection === 'videos' && (
+            <div className="grid grid-cols-2 gap-4">
+              {/* Add video content here */}
+            </div>
+          )}
+          
+          {currentSection === 'social' && (
+            <div className="flex flex-col items-center justify-center gap-4">
+              {/* Add social media links here */}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
